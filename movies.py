@@ -26,22 +26,45 @@ def get_description(raw_description):
 
     text_rows = raw_description.find_all('td', class_='font14')
     if not text_rows:
-        raise ValueError('Could not find row containing movie data. Has the page HTML changed?')
+        raise ValueError('Could not find row containing the movie synopsis. Has the page HTML changed?')
 
     # The first row contains all the movie information. Before the <p> tag, which is translated
     # as [\n] there is the movie synopsis.
-
     all_text = text_rows[0].text
-    synopsis = all_text[:all_text.find('\n')].strip()
 
-    data = dict()
-    data['synopsis'] = synopsis
+    # 1. The movie synopsis can be extracted directly
+    synopsis = all_text[:all_text.find('\n')].strip()
+    
+    # For exhibition times and locatinos, it's better to be guided by the paragraphs
+    paragraphs = text_rows[0].find_all('p')
+    if not paragraphs:
+        raise ValueError('Could not find movie exhibitino times. Has the page HTML changed?')
+
+    # Movie metadata is stored on the 1st paragraph as sequence of <strong>
+    metadata = paragraphs[0].find_all('strong')
+    if not metadata or len(metadata) < 2:
+        raise ValueError('Falied to determine movie metadata.')
+
+    # 2. Got genre and duration!
+    genre = metadata[0].next_sibling
+    duration = metadata[1].next_sibling
+
+    # 3. Exhibition times
+
+    data = {
+        'genre': genre,
+        'duration': duration,
+        'synopsis': synopsis
+    }
 
     return data
 
 
-# def extract_details_from_raw(raw_details):
-#     return {get_title(raw_title): get_description(raw_description) for (raw_title, raw_description) in raw_details}
+def pretty_print_movie(movie_data):
+    print(movie_data[0])
+    for k,v in movie_data[1].items():
+        print('\t{} - {}'.format(k, v))
+    print()
 
 
 if __name__ == '__main__':
@@ -54,6 +77,10 @@ if __name__ == '__main__':
     movies_table = get_movies_table(soup)
     
     frame = [(get_title(raw_title), get_description(raw_description)) for (raw_title, raw_description) in movies_table]
+    for f in frame:
+        pretty_print_movie(f)
 
-    print(frame)
+    # print(movies_table[0][1])
+
+
     
