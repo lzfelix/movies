@@ -63,12 +63,7 @@ def get_venues(raw_details):
         # Done with this batch. Put everything togheter.
         exhibitions.append({'type': mode, 'times': accumulator})
 
-    data = {
-        'venue': venue,
-        'sessions': exhibitions
-    }
-
-    return data
+    return {venue: exhibitions}
 
 
 def get_description(raw_description):
